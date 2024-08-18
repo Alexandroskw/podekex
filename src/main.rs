@@ -1,12 +1,12 @@
 mod db;
 
-use db::pokemon_tables::create_tables;
+use db::pokemon_tables::init_pokemon_database;
 use pokedb::db::connection::enable_connection;
 
 fn main() -> Result<(), postgres::Error> {
     let mut client = enable_connection()?;
 
-    create_tables(&mut client)?;
+    init_pokemon_database(&mut client)?;
 
     Ok(())
 }
