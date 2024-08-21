@@ -4,6 +4,7 @@ use std::path::Path;
 
 struct EnvConfig {
     database_url: String,
+    api_base_url: String,
 }
 
 // Implementig the configuration for the .env file
@@ -12,6 +13,7 @@ impl EnvConfig {
     fn new_env() -> Self {
         EnvConfig {
             database_url: String::new(),
+            api_base_url: String::new(),
         }
     }
 
@@ -38,11 +40,25 @@ impl EnvConfig {
             host
         };
         let database = Self::prompt_input("Database name: ")?;
+        let poke_api_url = Self::prompt_input(
+            "Pokemon API URL (Enter for 'https://pokeapi.co/api/v2/pokemon/'): ",
+        )?;
+        let poke_api_url = if poke_api_url.is_empty() {
+            "https://pokeapi.co/api/v2/pokemon/".to_string()
+        } else {
+            poke_api_url
+        };
 
+        // Printing the DB URL in the .env
         self.database_url = format!(
             "postgresql://{}:{}@{}/{}",
             username, password, host, database
         );
+
+        self.api_base_url = format!("{}", poke_api_url);
+
+        // Setting the URL Pokemon API in the .env file
+
         Ok(())
     }
 
@@ -55,6 +71,7 @@ impl EnvConfig {
             .open(path)?;
 
         writeln!(file, "DATABASE_URL={}", self.database_url)?;
+        writeln!(file, "POKEMON_API_BASE_URL={}", self.api_base_url)?;
 
         Ok(())
     }
