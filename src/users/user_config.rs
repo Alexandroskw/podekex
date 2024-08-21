@@ -1,6 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::{self, Write};
-use std::path::{self, Path};
+use std::path::Path;
 
 struct EnvConfig {
     database_url: String,

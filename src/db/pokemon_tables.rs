@@ -1,9 +1,9 @@
-use crate::db::connection::enable_connection;
+use crate::db::connection::AppConfig;
 use postgres::{Client, Error};
 
 // Queries are created here
 // Borrowing the client from the established connection
-fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
+pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
     // Query to create tables into the db
     client.batch_execute(
         "
@@ -39,12 +39,14 @@ fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
                 type_id INTEGER REFERENCES types(id),
                 PRIMARY KEY (pokemon_id, type_id)
             );
+            -- Abilities of pokemon table
             CREATE TABLE IF NOT EXISTS abilities (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(50) UNIQUE NOT NULL
             );
+            -- Abilities from each pokemon table
             CREATE TABLE IF NOT EXISTS pokemon_abilities (
-                pokemon_id UUID REFERENCES pokemon(id),
+                pokemon_id INTEGER REFERENCES pokemon(id),
                 ability_id INTEGER REFERENCES abilities(id),
                 is_hidden BOOLEAN NOT NULL,
                 PRIMARY KEY (pokemon_id, ability_id)
