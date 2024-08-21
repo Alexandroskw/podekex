@@ -1,19 +1,20 @@
 mod db;
 mod users;
 
-use db::pokemon_tables::init_pokemon_database;
 use pokedb::db::connection::AppConfig;
-use users::user_config::setup_env_file;
+use std::path::Path;
 
-fn main() -> Result<(), postgres::Error> {
-    let mut configs = AppConfig::new()?;
-
-    match setup_env_file() {
-        Ok(_) => println!("Configuration complete."),
-        Err(e) => eprintln!("Error to create .env file: {}", e),
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if !Path::new(".env").exists() {
+        println!(".env not found. Insert your data");
+    } else {
+        println!(".env found. Wait");
     }
 
-    init_pokemon_database(&mut client)?;
+    let mut config = AppConfig::new()?;
+    config.init_database()?;
+
+    println!("Pokedex started.");
 
     Ok(())
 }
