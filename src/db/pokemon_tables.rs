@@ -1,4 +1,3 @@
-use crate::db::connection::AppConfig;
 use postgres::{Client, Error};
 
 // Queries are created here
@@ -55,13 +54,13 @@ pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
         ",
     )?;
 
-    println!("Tables created.");
+    println!("Tables created or uploaded.");
 
     Ok(())
 }
 
-// Initialize the pokemon database
-pub fn init_pokemon_database(client: &mut Client) -> Result<(), Error> {
+// Moved to the connection module
+/*pub fn init_pokemon_database(client: &mut Client) -> Result<(), Error> {
     let mut client = enable_connection()?;
 
     // Confirms the creation of the tables in the db
@@ -69,4 +68,4 @@ pub fn init_pokemon_database(client: &mut Client) -> Result<(), Error> {
     println!("Pokemon database initalized successful");
 
     Ok(())
-}
+}*/
