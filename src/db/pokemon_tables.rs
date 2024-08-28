@@ -58,14 +58,3 @@ pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
 
     Ok(())
 }
-
-// Moved to the connection module
-/*pub fn init_pokemon_database(client: &mut Client) -> Result<(), Error> {
-    let mut client = enable_connection()?;
-
-    // Confirms the creation of the tables in the db
-    create_pokemon_tables(&mut client)?;
-    println!("Pokemon database initalized successful");
-
-    Ok(())
-}*/

@@ -2,12 +2,14 @@ use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::path::Path;
 
+#[allow(dead_code)]
 struct EnvConfig {
     database_url: String,
     api_base_url: String,
 }
 
 // Implementig the configuration for the .env file
+#[allow(dead_code)]
 impl EnvConfig {
     // Creating a new .env config
     fn new_env() -> Self {
@@ -55,9 +57,8 @@ impl EnvConfig {
             username, password, host, database
         );
 
-        self.api_base_url = format!("{}", poke_api_url);
-
         // Setting the URL Pokemon API in the .env file
+        self.api_base_url = format!("{}", poke_api_url);
 
         Ok(())
     }
@@ -77,12 +78,13 @@ impl EnvConfig {
     }
 }
 
+#[allow(dead_code)]
 pub fn setup_env_file() -> io::Result<()> {
     let mut config = EnvConfig::new_env();
 
     config.prompt()?;
     config.save(Path::new(".env"))?;
-    println!(".env file created successful");
+    println!(".env file created successfully");
 
     Ok(())
 }
