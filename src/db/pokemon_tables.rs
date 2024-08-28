@@ -64,7 +64,7 @@ pub fn init_pokemon_database(client: &mut Client) -> Result<(), Error> {
 
     // Confirms the creation of the tables in the db
     create_pokemon_tables(&mut client)?;
-    println!("Pokemon database initalized successful");
+    println!("Pokemon tables initalized successful.");
 
     Ok(())
 }
