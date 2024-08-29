@@ -2,6 +2,8 @@ use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::path::Path;
 
+const POKE_API_URL: &str = "https://pokeapi.co/api/v2/pokemon/";
+
 #[allow(dead_code)]
 struct EnvConfig {
     database_url: String,
@@ -46,7 +48,7 @@ impl EnvConfig {
             "Pokemon API URL (Enter for 'https://pokeapi.co/api/v2/pokemon/'): ",
         )?;
         let poke_api_url = if poke_api_url.is_empty() {
-            "https://pokeapi.co/api/v2/pokemon/".to_string()
+            POKE_API_URL.to_string()
         } else {
             poke_api_url
         };
@@ -58,7 +60,7 @@ impl EnvConfig {
         );
 
         // Setting the URL Pokemon API in the .env file
-        self.api_base_url = format!("{}", poke_api_url);
+        self.api_base_url = format!("{}", POKE_API_URL);
 
         Ok(())
     }
