@@ -5,6 +5,7 @@ use reqwest::Client as ReqwestClient;
 use std::env;
 
 // Struct for the Pokemon API and the client of the DB
+#[allow(dead_code)]
 pub struct AppConfig {
     pub db_client: Client,
     pub api_client: ReqwestClient,
@@ -12,6 +13,7 @@ pub struct AppConfig {
 }
 
 // Encapsulated all the configurations
+#[allow(dead_code)]
 impl AppConfig {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         // Load environment variables from the .env
