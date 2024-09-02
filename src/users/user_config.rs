@@ -38,6 +38,7 @@ impl EnvConfig {
         let username = Self::prompt_input("Username: ")?;
         let password = Self::prompt_input("Password: ")?;
         let host = Self::prompt_input("Host (Enter for 'localhost'): ")?;
+        // If the user don't set any host, the host will be 'localhost' by default
         let host = if host.is_empty() {
             "localhost".to_string()
         } else {
@@ -47,7 +48,9 @@ impl EnvConfig {
         let poke_api_url = Self::prompt_input(
             "Pokemon API URL (Enter for 'https://pokeapi.co/api/v2/pokemon/'): ",
         )?;
-        let poke_api_url = if poke_api_url.is_empty() {
+
+        // If the user don't set any URL of Pokemon API, the Pokedex will set automatically
+        if poke_api_url.is_empty() {
             POKE_API_URL.to_string()
         } else {
             poke_api_url
@@ -59,7 +62,7 @@ impl EnvConfig {
             username, password, host, database
         );
 
-        // Setting the URL Pokemon API in the .env file
+        // Printing the URL Pokemon API in the .env file
         self.api_base_url = format!("{}", POKE_API_URL);
 
         Ok(())
