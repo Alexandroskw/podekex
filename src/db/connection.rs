@@ -1,4 +1,7 @@
-use crate::{db::pokemon_tables::create_pokemon_tables, users::user_config::setup_env_file};
+use crate::{
+    db::pokemon_tables::{create_pokemon_tables, insert_pokemon_data},
+    users::user_config::setup_env_file,
+};
 use dotenv::dotenv;
 use postgres::{Client, Error, NoTls};
 use reqwest::Client as ReqwestClient;
