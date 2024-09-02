@@ -2,6 +2,7 @@ use crate::{db::pokemon_tables::create_pokemon_tables, users::user_config::setup
 use dotenv::dotenv;
 use postgres::{Client, Error, NoTls};
 use reqwest::Client as ReqwestClient;
+use serde_json::Value;
 use std::env;
 
 // Struct for the Pokemon API and the client of the DB
@@ -40,9 +41,9 @@ impl AppConfig {
     }
 }
 
-// Connecting to the database
+// Connecting to the database URL
 fn enable_connection() -> Result<Client, Error> {
-    // Get the URL from the environment variable
+    // Get the databse URL from the environment variable
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in the .env file. Denied");
 
@@ -57,4 +58,25 @@ fn config_pokemon_api() -> Result<(ReqwestClient, String), Box<dyn std::error::E
     let client = ReqwestClient::new();
 
     Ok((client, api_base_url))
+}
+
+// Function for enable connection with the API
+pub fn fetch_pokemon(pokemon_id: u32) -> Result<Option<Value>, Box<dyn std::error::Error>> {
+    // Connecting with the .env variable
+    let api_base_url =
+        env::var("POKEMON_BASE_API_URL").expect("POKEMON_BASE_API_URL must be set in .env file.");
+    // Like the postgres crate uses 'Client' too, at compiling show an error. Just avoiding that
+    let client = reqwest::blocking::Client::new();
+    let url = format!("{}{}", api_base_url, pokemon_id);
+    // Obtain a GET method for the HTTP request
+    let response = client.get(&url).send()?;
+
+    // Enabling connection with the API data
+    if response.status().is_success() {
+        let pokemon_data = response.json::<Value>()?;
+        Ok(Some(pokemon_data))
+    } else {
+        eprintln!("Error fetching pokemon {}{}", pokemon_id, response.status());
+        Ok(None)
+    }
 }
