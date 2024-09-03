@@ -1,4 +1,4 @@
-use postgres::{Client, Error, GenericClient};
+use postgres::{Client, Error};
 use serde_json::Value;
 
 // Queries are created here
@@ -55,38 +55,40 @@ pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
 }
 
 // Query for inserting the fetching pokemons
-pub fn insert_pokemon_data(client: &mut Client, pokemon_data: &Value) -> Result<(), Error> {
+pub fn insert_pokemon_data(
+    client: &mut Client,
+    pokemon_data: &Value,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Obtain the first data from the API as JSON
-    let id = pokemon_data["id"].as_i64().unwrap_or(0) as i32;
-    let name = pokemon_data["name"].as_str().unwrap_or("Unknown");
-    let height = pokemon_data["height"].as_f64().unwrap_or(0.0);
-    let weight = pokemon_data["weight"].as_f64().unwrap_or(0.0);
+    let pokedex_number = pokemon_data["id"].as_i64().ok_or("Missed")? as i32;
+    let name = pokemon_data["name"].as_str().ok_or("Missed")?.to_string();
+    let height = pokemon_data["height"].as_f64().ok_or("Missed")? / 10.0;
+    let weight = pokemon_data["weight"].as_f64().ok_or("Missed")? / 10.0;
 
-    let binding = Vec::new();
-    let stats = pokemon_data["stats"].as_array().unwrap_or(&binding);
-    let mut hp = 0;
-    let mut attack = 0;
-    let mut defense = 0;
-    let mut special_attack = 0;
-    let mut special_defense = 0;
-    let mut speed = 0;
+    let stats = pokemon_data["stats"].as_array().ok_or("Missed")?;
+    let hp = stats[0]["base_stat"].as_i64().ok_or("Missed")? as i32;
+    let attack = stats[1]["base_stat"].as_i64().ok_or("Missed")? as i32;
+    let defense = stats[2]["base_stat"].as_i64().ok_or("Missed")? as i32;
+    let special_attack = stats[3]["base_stat"].as_i64().ok_or("Missed")? as i32;
+    let special_defense = stats[4]["base_stat"].as_i64().ok_or("Missed")? as i32;
+    let speed = stats[5]["base_stat"].as_i64().ok_or("Missed")? as i32;
 
-    for stat in stats {
-        let stat_name = stat["stat"]["name"].as_str().unwrap_or("");
-        let base_stat = stat["base_stat"].as_i64().unwrap_or(0) as i32;
-        match stat_name {
-            "hp" => hp = base_stat,
-            "attack" => attack = base_stat,
-            "defense" => defense = base_stat,
-            "special_attack" => special_attack = base_stat,
-            "special_defense" => special_defense = base_stat,
-            "speed" => speed = base_stat,
-            _ => {}
-        }
-    }
-
-    client.execute("INSERT INTO pokemon (pokedex_number, name, height, weight, hp, attack, defense, special_attack, special_defense, speed)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", &[&id, &name, &height, &weight, &hp, &attack, &defense, &special_attack, &special_defense, &speed],)?;
+    client.execute(
+        "INSERT INTO pokemon (pokedex_number, name, height, weight, hp, attack, defense, special_attack, special_defense, speed)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        &[
+            &pokedex_number,
+            &name,
+            &(height as f32),
+            &(weight as f32),
+            &hp,
+            &attack,
+            &defense,
+            &special_attack,
+            &special_defense,
+            &speed
+        ],
+        )?;
 
     Ok(())
 }
