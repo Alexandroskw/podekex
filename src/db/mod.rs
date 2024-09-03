@@ -1,2 +1,2 @@
 pub mod connection;
-mod pokemon_tables;
+pub mod pokemon_tables;
