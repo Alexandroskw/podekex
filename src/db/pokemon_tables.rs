@@ -13,8 +13,8 @@ pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
                 random_id   SERIAL UNIQUE NOT NULL,
                 pokedex_number INTEGER UNIQUE NOT NULL,
                 name    VARCHAR(100) NOT NULL,
-                height  DECIMAL(5,2),
-                weight  DECIMAL(5,2),
+                height  VARCHAR(50),
+                weight  VARCHAR(50),
                 hp INTEGER,
                 attack INTEGER,
                 defense INTEGER,
@@ -62,8 +62,15 @@ pub fn insert_pokemon_data(
     // Obtain the first data from the API as JSON
     let pokedex_number = pokemon_data["id"].as_i64().ok_or("Missed")? as i32;
     let name = pokemon_data["name"].as_str().ok_or("Missed")?.to_string();
-    let height = pokemon_data["height"].as_f64().ok_or("Missed")? / 10.0;
-    let weight = pokemon_data["weight"].as_f64().ok_or("Missed")? / 10.0;
+
+    let height = format!(
+        "{:.2}",
+        pokemon_data["height"].as_f64().ok_or("Missed")? / 10.0
+    );
+    let weight = format!(
+        "{:.2}",
+        pokemon_data["weight"].as_f64().ok_or("Missed")? / 10.0
+    );
 
     let stats = pokemon_data["stats"].as_array().ok_or("Missed")?;
     let hp = stats[0]["base_stat"].as_i64().ok_or("Missed")? as i32;
@@ -79,8 +86,8 @@ pub fn insert_pokemon_data(
         &[
             &pokedex_number,
             &name,
-            &(height as f32),
-            &(weight as f32),
+            &height,
+            &weight,
             &hp,
             &attack,
             &defense,
