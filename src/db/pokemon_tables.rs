@@ -79,7 +79,7 @@ pub fn insert_pokemon_data(
     let special_attack = stats[3]["base_stat"].as_i64().ok_or("Missed")? as i32;
     let special_defense = stats[4]["base_stat"].as_i64().ok_or("Missed")? as i32;
     let speed = stats[5]["base_stat"].as_i64().ok_or("Missed")? as i32;
-
+  
     client.execute(
         "INSERT INTO pokemon (pokedex_number, name, height, weight, hp, attack, defense, special_attack, special_defense, speed)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
@@ -96,6 +96,10 @@ pub fn insert_pokemon_data(
             &speed
         ],
         )?;
+  
+    // Confirms the creation of the tables in the db
+    create_pokemon_tables(&mut client)?;
+    println!("Pokemon tables initalized successful.");
 
     Ok(())
 }
