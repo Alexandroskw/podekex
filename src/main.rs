@@ -16,7 +16,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!(".env found. Wait");
     }
 
-    println!("Pokedex started.");
-
     Ok(())
 }

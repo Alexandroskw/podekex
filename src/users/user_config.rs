@@ -74,7 +74,7 @@ impl EnvConfig {
             .open(path)?;
 
         writeln!(file, "DATABASE_URL={}", self.database_url)?;
-        writeln!(file, "POKEMON_API_BASE_URL={}", self.api_base_url)?;
+        writeln!(file, "POKEMON_BASE_API_URL={}", self.api_base_url)?;
 
         Ok(())
     }
