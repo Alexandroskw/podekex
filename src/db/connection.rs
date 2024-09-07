@@ -52,7 +52,7 @@ fn enable_connection() -> Result<Client, Error> {
 
 fn config_pokemon_api() -> Result<(ReqwestClient, String), Box<dyn std::error::Error>> {
     let api_base_url =
-        env::var("POKEMON_API_BASE_URL").expect("POKEMON_API_BASE_URL must be set in .env file");
+        env::var("POKEMON_BASE_API_URL").expect("POKEMON_BASE_API_URL must be set in .env file");
 
     let client = ReqwestClient::new();
 
