@@ -62,6 +62,15 @@ pub fn insert_pokemon_data(
     // Obtain the first data from the API as JSON
     let pokedex_number = pokemon_data["id"].as_i64().ok_or("Missed")? as i32;
     let name = pokemon_data["name"].as_str().ok_or("Missed")?.to_string();
+  
+    let height = format!(
+        "{:.2}",
+        pokemon_data["height"].as_f64().ok_or("Missed")? / 10.0
+    );
+    let weight = format!(
+        "{:.2}",
+        pokemon_data["weight"].as_f64().ok_or("Missed")? / 10.0
+    );
 
     // Obtain the height and weight, then the data is parsed as f64 and last divided between 10.0.
     // Division is for obtain the height and weight as meters and kg respectively
@@ -82,7 +91,7 @@ pub fn insert_pokemon_data(
     let special_attack = stats[3]["base_stat"].as_i64().ok_or("Missed")? as i32;
     let special_defense = stats[4]["base_stat"].as_i64().ok_or("Missed")? as i32;
     let speed = stats[5]["base_stat"].as_i64().ok_or("Missed")? as i32;
-
+  
     // Inserting the obtained data in the 'pokemon' table
     client.execute(
         "INSERT INTO pokemon (pokedex_number, name, height, weight, hp, attack, defense, special_attack, special_defense, speed)
@@ -111,6 +120,10 @@ pub fn insert_pokemon_data(
             &speed
         ],
         )?;
+  
+    // Confirms the creation of the tables in the db
+    create_pokemon_tables(&mut client)?;
+    println!("Pokemon tables initalized successful.");
 
     Ok(())
 }
