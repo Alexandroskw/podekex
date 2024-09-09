@@ -41,7 +41,6 @@ impl AppConfig {
         // Get the databse URL from the environment variable
         let database_url =
             env::var("DATABASE_URL").expect("DATABASE_URL must be set in the .env file. Denied");
-The API finally fetch the Pokemon in the db. (Only the first generation)
         // Establishing connection
         Client::connect(&database_url, NoTls)
     }
@@ -53,7 +52,7 @@ The API finally fetch the Pokemon in the db. (Only the first generation)
         let client = ReqwestClient::new();
 
         Ok((client, api_base_url))
-    }The API finally fetch the Pokemon in the db. (Only the first generation)
+    }
 
     pub fn fetch_pokemon(
         &self,
