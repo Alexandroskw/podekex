@@ -13,8 +13,8 @@ pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
                 random_id   SERIAL UNIQUE NOT NULL,
                 pokedex_number INTEGER UNIQUE NOT NULL,
                 name    VARCHAR(100) NOT NULL,
-                height  DECIMAL(5,2),
-                weight  DECIMAL(5,2),
+                height  VARCHAR(10),
+                weight  VARCHAR(10),
                 hp INTEGER,
                 attack INTEGER,
                 defense INTEGER,
@@ -62,8 +62,17 @@ pub fn insert_pokemon_data(
     // Obtain the first data from the API as JSON
     let pokedex_number = pokemon_data["id"].as_i64().ok_or("Missed")? as i32;
     let name = pokemon_data["name"].as_str().ok_or("Missed")?.to_string();
-    let height = pokemon_data["height"].as_f64().ok_or("Missed")? / 10.0;
-    let weight = pokemon_data["weight"].as_f64().ok_or("Missed")? / 10.0;
+
+    /*Obtaining the height and weight as JSON. Then, the data is parsed as 64-bit float and is
+    divided between 10.0. Division is for obtain the data as meters and kg*/
+    let height = format!(
+        "{:.2}",
+        pokemon_data["height"].as_f64().ok_or("Missed")? / 10.0
+    );
+    let weight = format!(
+        "{:.2}",
+        pokemon_data["weight"].as_f64().ok_or("Missed")? / 10.0
+    );
 
     let stats = pokemon_data["stats"].as_array().ok_or("Missed")?;
     let hp = stats[0]["base_stat"].as_i64().ok_or("Missed")? as i32;
@@ -75,12 +84,23 @@ pub fn insert_pokemon_data(
 
     client.execute(
         "INSERT INTO pokemon (pokedex_number, name, height, weight, hp, attack, defense, special_attack, special_defense, speed)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT(pokedex_number) DO UPDATE SET
+            name = EXCLUDED.name,
+            height = EXCLUDED.height,
+            weight = EXCLUDED.weight,
+            hp = EXCLUDED.hp,
+            attack = EXCLUDED.attack,
+            defense = EXCLUDED.defense,
+            special_attack = EXCLUDED.special_attack,
+            special_defense = EXCLUDED.special_defense,
+            speed = EXCLUDED.speed
+        RETURNING id",
         &[
             &pokedex_number,
             &name,
-            &(height as f32),
-            &(weight as f32),
+            &height,
+            &weight,
             &hp,
             &attack,
             &defense,
@@ -88,7 +108,7 @@ pub fn insert_pokemon_data(
             &special_defense,
             &speed
         ],
-        )?;
+    )?;
 
     Ok(())
 }
