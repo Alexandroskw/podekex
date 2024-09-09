@@ -49,6 +49,10 @@ impl AppConfig {
         let api_base_url = env::var("POKEMON_BASE_API_URL")
             .expect("POKEMON_BASE_API_URL must be set in .env file");
 
+fn config_pokemon_api() -> Result<(ReqwestClient, String), Box<dyn std::error::Error>> {
+    let api_base_url =
+        env::var("POKEMON_BASE_API_URL").expect("POKEMON_BASE_API_URL must be set in .env file");
+
         let client = ReqwestClient::new();
 
         Ok((client, api_base_url))
