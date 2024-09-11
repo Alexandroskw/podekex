@@ -1,4 +1,4 @@
-use postgres::{row, Client, Error, GenericClient};
+use postgres::{Client, Error};
 use serde_json::Value;
 
 // Queries are created here
