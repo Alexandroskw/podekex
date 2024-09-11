@@ -1,4 +1,4 @@
-use postgres::{Client, Error};
+use postgres::{row, Client, Error, GenericClient};
 use serde_json::Value;
 
 // Queries are created here
@@ -109,6 +109,55 @@ pub fn insert_pokemon_data(
             &speed
         ],
     )?;
+
+    let types = pokemon_data["types"]
+        .as_array()
+        .ok_or("Missing types array")?;
+
+    // The cycle inserts the last data into the other tables
+    for type_pokemon in types {
+        // Fetching the pokemon type by 'type' and the name of the type like "bug" or "fire"
+        let type_name = type_pokemon["type"]["name"]
+            .as_str()
+            .ok_or("Missing type name")?;
+
+        // Inserting the pokemon type on the 'types' table
+        client.execute(
+            "INSERT INTO types (name) VALUES ($1) ON CONFLICT DO NOTHING",
+            &[&type_name],
+        )?;
+
+        /*Using 'query' instead of 'execute' for the query type. Next, we selecting the id column
+        from the 'types' table and insert the type into the table*/
+        let rows = client.query("SELECT id FROM types WHERE name = $1", &[&type_name])?;
+
+        // after fetching the id of the types, It's asigned a 32-bit integer and get the row 0
+        // from the JSON with the 'get' method of http
+        let type_id: i32 = if let Some(row) = rows.first() {
+            row.get(0)
+        } else {
+            return Err("Type not found".into());
+        };
+
+        /*Like the rows variable, it's fetching the id from pokemon table and inserting the pokedex
+        number like the id in the table*/
+        let pokemon_rows = client.query(
+            "SELECT id FROM pokemon WHERE pokedex_number = $1",
+            &[&pokedex_number],
+        )?;
+        let pokemon_id: i32 = if let Some(row) = pokemon_rows.first() {
+            row.get(0)
+        } else {
+            return Err("Pokemon not found".into());
+        };
+
+        // Once fetched the data, the pokedex insert the id type and pokemon id in the
+        // pokemon_types table
+        client.execute(
+            "INSERT INTO pokemon_types (pokemon_id, type_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            &[&pokemon_id, &type_id],
+        )?;
+    }
 
     Ok(())
 }

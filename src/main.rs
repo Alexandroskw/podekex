@@ -35,7 +35,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    println!("Pokedex started.");
-
     Ok(())
 }
