@@ -2,7 +2,7 @@ mod db;
 mod users;
 
 use db::connection::AppConfig;
-use db::pokemon_tables::insert_pokemon_data;
+use db::pokemon_tables::{insert_pokemon_data, reset_types_table};
 use dotenv::dotenv;
 use pokedb::users::user_config::setup_env_file;
 use std::path::Path;
@@ -24,7 +24,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut config = AppConfig::new()?;
     // Init the creation of the tables
     config.init_database()?;
-    for i in 1..=151 {
+
+    reset_types_table(&mut config.db_client)?;
+
+    for i in 1..=150 {
         match config.fetch_pokemon(i) {
             Ok(Some(pokemon_data)) => {
                 insert_pokemon_data(&mut config.db_client, &pokemon_data)?;
