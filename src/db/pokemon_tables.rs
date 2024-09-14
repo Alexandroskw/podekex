@@ -25,7 +25,7 @@ pub fn create_pokemon_tables(client: &mut Client) -> Result<(), Error> {
             -- Types of pokemon table
             CREATE TABLE IF NOT EXISTS types (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(20)
+                name VARCHAR(20) UNIQUE NOT NULL
         );
             -- Pokemon types table
             CREATE TABLE IF NOT EXISTS pokemon_types (
@@ -122,22 +122,9 @@ pub fn insert_pokemon_data(
             .ok_or("Missing type name")?;
 
         // Inserting the pokemon type on the 'types' table
-        client.execute(
-            "INSERT INTO types (name) VALUES ($1) ON CONFLICT DO NOTHING",
-            &[&type_name],
-        )?;
-
-        /*Using 'query' instead of 'execute' for the query type. Next, we selecting the id column
-        from the 'types' table and insert the type into the table*/
-        let rows = client.query("SELECT id FROM types WHERE name = $1", &[&type_name])?;
-
-        // after fetching the id of the types, It's asigned a 32-bit integer and get the row 0
-        // from the JSON with the 'get' method of http
-        let type_id: i32 = if let Some(row) = rows.first() {
-            row.get(0)
-        } else {
-            return Err("Type not found".into());
-        };
+        let type_id: i32 = client
+            .query_one("SELECT id FROM types WHERE name = $1", &[&type_name])?
+            .get(0);
 
         /*Like the rows variable, it's fetching the id from pokemon table and inserting the pokedex
         number like the id in the table*/
@@ -156,6 +143,27 @@ pub fn insert_pokemon_data(
         client.execute(
             "INSERT INTO pokemon_types (pokemon_id, type_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
             &[&pokemon_id, &type_id],
+        )?;
+    }
+
+    Ok(())
+}
+
+/* Adding a 'index' function for consistency for keeping the order the 'types' table
+This function is just for avoiding an insert issue in the 'types' table. Before this function,
+the types at insertion in the db, are in disorder and having a random index*/
+pub fn reset_types_table(client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
+    client.execute("TRUNCATE TABLE types RESTART IDENTITY CASCADE", &[])?;
+
+    let types = [
+        "normal", "fighting", "flying", "poison", "ground", "rock", "bug", "ghost", "steel",
+        "fire", "water", "grass", "electric", "psychic", "ice", "dragon", "dark", "fairy",
+    ];
+
+    for name in types.iter() {
+        client.execute(
+            "INSERT INTO types (name) VALUES ($1) ON CONFLICT (name) DO NOTHING",
+            &[name],
         )?;
     }
 
