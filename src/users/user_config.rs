@@ -41,11 +41,8 @@ impl EnvConfig {
         let password = Self::prompt_input("Password: ")?;
         let host = Self::prompt_input("Host (Enter for 'localhost'): ")?;
 
-        // If the user don't set any host, the host will be 'localhost' by default
-
-        // if the user press the enter key, by default, 'localhost' is setting in the .env file.
-        // Otherwise, the host will be set the one the user gives
-
+        /*If the user press the enter key, by default, 'localhost' is setting in the .env file.
+        Otherwise, the host will be set the one the user gives*/
         let host = if host.is_empty() {
             "localhost".to_string()
         } else {
@@ -64,11 +61,7 @@ impl EnvConfig {
             poke_api_url
         };
 
-
-        // Printing the DB URL in the .env
-
         // The db URL will be set with the data of the user
-
         self.database_url = format!(
             "postgresql://{}:{}@{}/{}",
             username, password, host, database
@@ -94,7 +87,6 @@ impl EnvConfig {
         Ok(())
     }
 }
-
 
 #[allow(dead_code)]
 // This function saves the .env file with the user credentials and creates it if not exists
