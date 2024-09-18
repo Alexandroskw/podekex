@@ -114,7 +114,7 @@ pub fn insert_pokemon_data(
         .as_array()
         .ok_or("Missing types array")?;
 
-    // The cycle inserts the last data into the other tables
+    // Loop for insert the type for each pokemon in the db
     for type_pokemon in types {
         // Fetching the pokemon type by 'type' and the name of the type like "bug" or "fire"
         let type_name = type_pokemon["type"]["name"]
@@ -143,6 +143,55 @@ pub fn insert_pokemon_data(
         client.execute(
             "INSERT INTO pokemon_types (pokemon_id, type_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
             &[&pokemon_id, &type_id],
+        )?;
+    }
+
+    let abilities = pokemon_data["abilities"]
+        .as_array()
+        .ok_or("Missing abilities array")?;
+
+    // Loop for insert the abilities for each pokemon in the db
+    for ability_data in abilities {
+        /* Fetching the pokemon abilities by 'abilities' and the name for the abilities like "Flash
+        fire" or "Cloud nine" */
+        let ability_name = ability_data["ability"]["name"]
+            .as_str()
+            .ok_or("Missing abilities name")?;
+
+        let is_hidden = ability_data["is_hidden"]
+            .as_bool()
+            .ok_or("Missing is_hidden values")?;
+
+        client.execute(
+            "INSERT INTO abilities (name) VALUES ($1) ON CONFLICT (name) DO NOTHING",
+            &[&ability_name],
+        )?;
+
+        // Inserting the pokemon abilities on the 'abilities? table
+        let ability_id: i32 = client
+            .query_one(
+                "WITH inserted AS (
+                INSERT INTO abilities (name) VALUES ($1) ON CONFLICT (name) DO NOTHING
+                RETURNING id
+            )
+            SELECT id FROM inserted UNION ALL SELECT id FROM abilities WHERE name = $1 LIMIT 1",
+                &[&ability_name],
+            )?
+            .get(0);
+
+        let pokemon_rows = client.query(
+            "SELECT id FROM pokemon WHERE pokedex_number = $1",
+            &[&pokedex_number],
+        )?;
+        let pokemon_id: i32 = if let Some(row) = pokemon_rows.first() {
+            row.get(0)
+        } else {
+            return Err("Pokemon not found".into());
+        };
+
+        client.execute(
+            "INSERT INTO pokemon_abilities (pokemon_id, ability_id, is_hidden) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+            &[&pokemon_id, &ability_id, &is_hidden],
         )?;
     }
 
