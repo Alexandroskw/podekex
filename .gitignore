@@ -1,2 +1,7 @@
 /target
 .env
+
+# Ignoring all the generated images
+/*.png
+/*.jpg
+/*jpeg
