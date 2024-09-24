@@ -227,24 +227,27 @@ fn plot_distributions(df: &DataFrame) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 fn plot_type_combinations(df: &DataFrame) -> Result<(), Box<dyn Error>> {
-    let root = BitMapBackend::new("type_combinations.png", (1800, 950)).into_drawing_area();
+    let root = BitMapBackend::new("type_combinations.png", (2000, 1000)).into_drawing_area();
     root.fill(&WHITE)?;
 
-    // Obtener la columna de tipos y contar manualmente
+    // Fetching the colum "types" from the DataFrame
     let types_column = df.column("types")?.str()?;
     let mut type_counts = HashMap::new();
 
+    // Itreating in all the types in the column
     for type_str in types_column.into_iter().flatten() {
+        // Searching for a separator in the JSON
         for type_name in type_str.split(", ") {
             *type_counts.entry(type_name.to_string()).or_insert(0u32) += 1;
         }
     }
 
-    // Convertir el HashMap a un vector y ordenarlo
+    // Casting the HashMap to vector and sorting from largest to smallest and taken the first 20
     let mut type_count_vec: Vec<_> = type_counts.into_iter().collect();
     type_count_vec.sort_by(|a, b| b.1.cmp(&a.1));
-    type_count_vec.truncate(20); // Limitar a los 20 tipos más comunes
+    type_count_vec.truncate(20);
 
+    // Separating the names of the types and their counts in different vectors
     let type_names: Vec<String> = type_count_vec
         .iter()
         .map(|(name, _)| name.clone())
@@ -262,29 +265,42 @@ fn plot_type_combinations(df: &DataFrame) -> Result<(), Box<dyn Error>> {
     chart
         .configure_mesh()
         .disable_x_mesh()
-        .bold_line_style(WHITE.mix(0.3))
+        .disable_y_mesh()
         .y_desc("Type Combination")
         .x_desc("Count")
         .axis_desc_style(("sans-serif", 30))
+        .y_labels(type_names.len())
         .draw()?;
 
+    // Drawing the bars
     chart.draw_series(type_names.iter().zip(counts.iter()).enumerate().map(
         |(i, (_, &count))| {
             let mut bar = Rectangle::new([(0, i), (count, i + 1)], BLUE.filled());
-            bar.set_margin(0, 0, 0, 0);
+            bar.set_margin(0, 0, 1, 1);
             bar
         },
     ))?;
 
-    // Usar draw_series para las etiquetas de texto
-    chart.draw_series(
-        type_names
-            .iter()
-            .enumerate()
-            .map(|(i, name)| Text::new(name.to_string(), (5, i), ("sans-serif", 20).into_font())),
-    )?;
+    // Drawing the text labels
+    chart.draw_series(type_names.iter().enumerate().map(|(i, name)| {
+        Text::new(
+            name.to_string(),
+            (0, i),
+            ("sans-serif", 20).into_font().color(&BLACK),
+        )
+    }))?;
+
+    // Adding the values at the end of each bar (this section is optional)
+    // chart.draw_series(counts.iter().enumerate().map(|(i, &count)| {
+    //     Text::new(
+    //         count.to_string(),
+    //         (count, i),
+    //         ("sans-serif", 20).into_font().color(&BLACK),
+    //     )
+    // }))?;
 
     root.present()?;
 
+    println!("Chart has been saved to type_combinations.png");
     Ok(())
 }
