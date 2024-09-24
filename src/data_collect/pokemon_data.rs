@@ -1,6 +1,7 @@
 use plotters::prelude::*;
 use polars::prelude::*;
 use postgres::Client;
+use std::collections::HashMap;
 use std::error::Error;
 
 // Adding a struct for more control in the creation of the Vectors
@@ -226,8 +227,64 @@ fn plot_distributions(df: &DataFrame) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 fn plot_type_combinations(df: &DataFrame) -> Result<(), Box<dyn Error>> {
-    let root = BitMapBackend::new("type_combinations.png", (800, 600)).into_drawing_area();
+    let root = BitMapBackend::new("type_combinations.png", (1800, 950)).into_drawing_area();
     root.fill(&WHITE)?;
+
+    // Obtener la columna de tipos y contar manualmente
+    let types_column = df.column("types")?.str()?;
+    let mut type_counts = HashMap::new();
+
+    for type_str in types_column.into_iter().flatten() {
+        for type_name in type_str.split(", ") {
+            *type_counts.entry(type_name.to_string()).or_insert(0u32) += 1;
+        }
+    }
+
+    // Convertir el HashMap a un vector y ordenarlo
+    let mut type_count_vec: Vec<_> = type_counts.into_iter().collect();
+    type_count_vec.sort_by(|a, b| b.1.cmp(&a.1));
+    type_count_vec.truncate(20); // Limitar a los 20 tipos más comunes
+
+    let type_names: Vec<String> = type_count_vec
+        .iter()
+        .map(|(name, _)| name.clone())
+        .collect();
+    let counts: Vec<u32> = type_count_vec.iter().map(|(_, count)| *count).collect();
+
+    let max_count = *counts.iter().max().unwrap_or(&0);
+    let mut chart = ChartBuilder::on(&root)
+        .x_label_area_size(40)
+        .y_label_area_size(100)
+        .margin(5)
+        .caption("Top 20 Type Combinations", ("sans-serif", 50.0))
+        .build_cartesian_2d(0..max_count, 0..type_names.len())?;
+
+    chart
+        .configure_mesh()
+        .disable_x_mesh()
+        .bold_line_style(WHITE.mix(0.3))
+        .y_desc("Type Combination")
+        .x_desc("Count")
+        .axis_desc_style(("sans-serif", 30))
+        .draw()?;
+
+    chart.draw_series(type_names.iter().zip(counts.iter()).enumerate().map(
+        |(i, (_, &count))| {
+            let mut bar = Rectangle::new([(0, i), (count, i + 1)], BLUE.filled());
+            bar.set_margin(0, 0, 0, 0);
+            bar
+        },
+    ))?;
+
+    // Usar draw_series para las etiquetas de texto
+    chart.draw_series(
+        type_names
+            .iter()
+            .enumerate()
+            .map(|(i, name)| Text::new(name.to_string(), (5, i), ("sans-serif", 20).into_font())),
+    )?;
+
+    root.present()?;
 
     Ok(())
 }
