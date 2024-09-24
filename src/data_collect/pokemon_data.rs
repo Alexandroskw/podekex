@@ -1,6 +1,7 @@
 use plotters::prelude::*;
 use polars::prelude::*;
 use postgres::Client;
+use std::error::Error;
 
 // Adding a struct for more control in the creation of the Vectors
 struct PokemonAttribs {
@@ -93,7 +94,8 @@ pub fn load_pokemon_data(client: &mut Client) -> Result<DataFrame, Box<dyn std::
         Series::new("types".into(), pokemon_attribs.types),
     ])?;
 
-    let _ = plot_distributions(&df.clone());
+    plot_distributions(&df.clone())?;
+    plot_type_combinations(&df.clone())?;
 
     Ok(df)
 }
@@ -219,6 +221,13 @@ fn plot_distributions(df: &DataFrame) -> Result<(), Box<dyn std::error::Error>> 
     }
 
     root.present()?;
+
+    Ok(())
+}
+
+fn plot_type_combinations(df: &DataFrame) -> Result<(), Box<dyn Error>> {
+    let root = BitMapBackend::new("type_combinations.png", (800, 600)).into_drawing_area();
+    root.fill(&WHITE)?;
 
     Ok(())
 }
