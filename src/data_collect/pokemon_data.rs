@@ -306,5 +306,10 @@ fn plot_type_combinations(df: &DataFrame) -> Result<(), Box<dyn Error>> {
 }
 
 fn correlation_analysis(df: &DataFrame) -> Result<(), Box<dyn Error>> {
+    let hp = df.column("hp")?.f64()?;
+    let height = df.column("height")?.f64()? / 10.0;
+    let hp_mean = hp.mean().unwrap();
+    let height_mean = height.mean().unwrap();
+
     Ok(())
 }
