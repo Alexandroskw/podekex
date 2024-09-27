@@ -52,32 +52,80 @@ pub fn correlation_analysis(df: &DataFrame) -> Result<(), Box<dyn std::error::Er
             hp vs height: {correlation_hp_height}
             hp vs weight: {correlation_hp_weight}"
     );
+    plot_scatter(df)?;
 
-    // Creating the plot
-    let root = BitMapBackend::new("hp_correlation", (1200, 600)).into_drawing_area();
+    Ok(())
+}
+
+fn plot_scatter(df: &DataFrame) -> Result<(), Box<dyn std::error::Error>> {
+    let root = BitMapBackend::new("pokemon_scatter_plots.png", (1600, 800)).into_drawing_area();
     root.fill(&WHITE)?;
 
-    let areas = root.split_evenly((2, 1));
+    let areas = root.split_evenly((1, 2));
     let columns = ["height", "weight"];
-    for (area, &columns) in areas.into_iter().zip(columns.iter()) {
-        let series = df.column(columns)?;
-        let f64_series: Result<Series, PolarsError> = match series.dtype() {
-            DataType::Float64 => Ok(series.clone()),
-            DataType::Int32 => series.cast(&DataType::Float64),
-            DataType::String => {
-                let parsed: Vec<Option<f64>> = series
-                    .str()?
-                    .into_iter()
-                    .map(|opt| opt.and_then(|s| s.parse::<f64>().ok()))
-                    .collect();
-                Ok(Series::new(columns.into(), parsed))
-            }
+
+    let hp_series = df.column("hp")?.i32()?;
+
+    for (area, &column) in areas.into_iter().zip(columns.iter()) {
+        let series = df.column(column)?;
+
+        let f64_series: Vec<f64> = match series.dtype() {
+            DataType::Float64 => series.f64()?.into_iter().flatten().collect(),
+            DataType::Int32 => series
+                .i32()?
+                .into_iter()
+                .map(|v| v.map(|i| i as f64))
+                .flatten()
+                .collect(),
+            DataType::String => series
+                .str()?
+                .into_iter()
+                .filter_map(|opt_s| opt_s.and_then(|s| s.parse::<f64>().ok()))
+                .collect(),
             _ => {
-                println!("Unsupported data type for column: {columns}. Skipping");
+                println!("Unsupported data type for column: {column}. Skipping");
                 continue;
             }
         };
+
+        if f64_series.is_empty() {
+            println!("Column: {column} is empty after conversion. Skipping");
+            continue;
+        }
+
+        let x_min = f64_series.iter().cloned().fold(f64::INFINITY, f64::min);
+        let x_max = f64_series.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        let y_min = hp_series.min().unwrap_or(0) as f64;
+        let y_max = hp_series.max().unwrap_or(255) as f64;
+
+        let mut chart = ChartBuilder::on(&area)
+            .margin(5)
+            .set_label_area_size(LabelAreaPosition::Left, 40)
+            .set_label_area_size(LabelAreaPosition::Bottom, 40)
+            .caption(format!("HP vs {}", column), ("sans-serif", 40))
+            .build_cartesian_2d(x_min..x_max, y_min..y_max)?;
+
+        chart.configure_mesh().draw()?;
+
+        chart
+            .draw_series(
+                hp_series
+                    .into_iter()
+                    .zip(f64_series.iter())
+                    .filter_map(|(hp, &x)| hp.map(|hp| Circle::new((x, hp as f64), 2, BLUE))),
+            )?
+            .label("Pokémon")
+            .legend(|(x, y)| Circle::new((x, y), 3, BLUE));
+
+        chart
+            .configure_series_labels()
+            .background_style(WHITE.mix(0.8))
+            .border_style(BLACK)
+            .draw()?;
     }
 
+    root.present()?;
+
+    println!("Scatter plots have been saved to pokemon_scatter_plots.png");
     Ok(())
 }
