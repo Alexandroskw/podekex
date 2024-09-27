@@ -311,28 +311,41 @@ fn correlation_analysis(df: &DataFrame) -> Result<(), Box<dyn Error>> {
     let corr_hp = df.columns(["hp", "height", "weight"])?;
 
     let hp = corr_hp[0].i32()?;
-    let height = corr_hp[1].f64()?;
-    let weight = corr_hp[2].f64()?;
+    let height = corr_hp[1].str()?;
+    let weight = corr_hp[2].str()?;
+
+    let height_f64: Vec<f64> = height
+        .into_iter()
+        .filter_map(|h| h.and_then(|s| s.parse::<f64>().ok()))
+        .collect();
 
     // Calculating the middle of the columns
     let hp_mean = hp.mean().unwrap();
-    let height_mean = height.mean().unwrap();
+    let height_mean = height_f64.iter().sum::<f64>() / height_f64.len() as f64;
     let weight_mean = weight.mean().unwrap();
 
-    let mut covariance: f64 = 0.0;
+    let mut covariance_hp_height: f64 = 0.0;
+    let mut covariance_hp_weight: f64 = 0.0;
     let mut hp_variance: f64 = 0.0;
     let mut h_variance: f64 = 0.0;
     let mut w_variance: f64 = 0.0;
 
-    for (h, ht) in hp.into_no_null_iter().zip(height.into_no_null_iter()) {
+    for ((h, ht), w) in hp
+        .into_iter()
+        .zip(height_f64.into_iter())
+        .zip(weight.into_no_null_iter())
+    {
         let h_f64 = h as f64;
-        covariance += (h_f64 - hp_mean) * (ht - height_mean);
+        covariance_hp_height += (h_f64 - hp_mean) * (ht - height_mean);
+        covariance_hp_weight += (h_f64 - hp_mean) * (w - weight_mean);
         hp_variance += (h_f64 - hp_mean).powi(2);
-        h_variance += (ht - hp_mean).powi(2);
+        h_variance += (ht - height_mean).powi(2);
+        w_variance += (w - weight_mean).powi(2);
     }
 
-    let correlation = covariance / (hp_variance.sqrt() * h_variance.sqrt());
-    println!("Correlation {correlation}");
+    let correlation_hp_height = covariance_hp_height / (hp_variance.sqrt() * h_variance.sqrt());
+    let correlation_hp_weight = covariance_hp_weight / (hp_variance.sqrt() * w_variance.sqrt());
+    println!("Correlation {correlation_hp_height}, {correlation_hp_weight}");
 
     Ok(())
 }
