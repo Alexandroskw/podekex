@@ -9,7 +9,7 @@ use dotenv::dotenv;
 use pokedb::users::user_config::setup_env_file;
 use std::path::Path;
 
-const TOTAL_POKEMON: u32 = 386;
+const TOTAL_POKEMON: u32 = 1025;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
