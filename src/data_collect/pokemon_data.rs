@@ -97,6 +97,7 @@ pub fn load_pokemon_data(client: &mut Client) -> Result<DataFrame, Box<dyn std::
 
     plot_distributions(&df.clone())?;
     plot_type_combinations(&df.clone())?;
+    correlation_analysis(&df.clone())?;
 
     Ok(df)
 }
@@ -306,10 +307,32 @@ fn plot_type_combinations(df: &DataFrame) -> Result<(), Box<dyn Error>> {
 }
 
 fn correlation_analysis(df: &DataFrame) -> Result<(), Box<dyn Error>> {
-    let hp = df.column("hp")?.f64()?;
-    let height = df.column("height")?.f64()? / 10.0;
+    // Fetching the hp and height and weight columns
+    let corr_hp = df.columns(["hp", "height", "weight"])?;
+
+    let hp = corr_hp[0].i32()?;
+    let height = corr_hp[1].f64()?;
+    let weight = corr_hp[2].f64()?;
+
+    // Calculating the middle of the columns
     let hp_mean = hp.mean().unwrap();
     let height_mean = height.mean().unwrap();
+    let weight_mean = weight.mean().unwrap();
+
+    let mut covariance: f64 = 0.0;
+    let mut hp_variance: f64 = 0.0;
+    let mut h_variance: f64 = 0.0;
+    let mut w_variance: f64 = 0.0;
+
+    for (h, ht) in hp.into_no_null_iter().zip(height.into_no_null_iter()) {
+        let h_f64 = h as f64;
+        covariance += (h_f64 - hp_mean) * (ht - height_mean);
+        hp_variance += (h_f64 - hp_mean).powi(2);
+        h_variance += (ht - hp_mean).powi(2);
+    }
+
+    let correlation = covariance / (hp_variance.sqrt() * h_variance.sqrt());
+    println!("Correlation {correlation}");
 
     Ok(())
 }
